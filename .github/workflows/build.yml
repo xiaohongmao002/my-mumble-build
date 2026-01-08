@@ -1,49 +1,48 @@
-name: Build Mumble Server and Client
+name: Build Mumble Latest
 
 on:
-  workflow_dispatch: # 手动触发
+  workflow_dispatch: # 手動觸發按鈕
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    # 賦予讀取權限
+    permissions:
+      contents: read
 
     steps:
+      # 第一步：正確抓取 Mumble 官方原始碼
       - name: Checkout Mumble Source
         uses: actions/checkout@v4
         with:
           repository: mumble-server/mumble
+          ref: master  # 抓取最新的開發分支
           submodules: recursive
-          fetch-depth: 0
+          fetch-depth: 1
 
-      - name: Install All Dependencies
+      # 第二步：安裝編譯環境
+      - name: Install Dependencies
         run: |
-          sudo apt update
-          # 安装服务端 + 客户端所需的所有依赖（包括 Qt 图形库、声音驱动、显示驱动等）
-          sudo apt install -y build-essential cmake pkg-config qtbase5-dev qttools5-dev-tools \
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config qtbase5-dev qttools5-dev-tools \
           libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev libboost-dev libssl-dev \
           libprotobuf-dev protobuf-compiler libcap-dev libsndfile1-dev libspeex-dev \
           libspeexdsp-dev libopus-dev libavahi-compat-libdnssd-dev libzeroc-ice-dev \
           libasound2-dev libpulse-dev libjack-jackd2-dev libxi-dev libxext-dev sqlite3
 
+      # 第三步：編譯
       - name: Configure and Build
         run: |
           mkdir build && cd build
-          # -Dserver=all (编译服务端)
-          # -Dclient=all (编译客户端)
-          cmake -Dserver=all -Dclient=all -Dtests=OFF ..
+          # 同時編譯服務端與客戶端
+          cmake -Dserver=all -Dclient=all -Dtests=OFF -Doverlay=OFF ..
           make -j$(nproc)
 
-      - name: Archive Results
-        run: |
-          mkdir -p release_files
-          cp build/mumble-server release_files/
-          cp build/mumble release_files/
-          # 如果有生成的安装包也可以一并放入
-
+      # 第四步：打包產物
       - name: Upload Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: mumble-latest-ubuntu22-binaries
+          name: mumble-latest-binaries
           path: |
             build/mumble-server
             build/mumble
