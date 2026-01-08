@@ -24,12 +24,14 @@ jobs:
           libprotobuf-dev protobuf-compiler libcap-dev libsndfile1-dev libspeex-dev \
           libspeexdsp-dev libopus-dev libavahi-compat-libdnssd-dev libzeroc-ice-dev \
           libasound2-dev libpulse-dev libjack-jackd2-dev libxi-dev libxext-dev sqlite3 \
-          libpoco-dev # <--- 核心修復：添加 Poco 庫依賴
+          libpoco-dev \
+          libspeechd-dev # <--- 修复这次的错误：文本转语音依赖
 
       - name: Configure and Build
         run: |
           mkdir build && cd build
-          # 添加 -Dplugins=OFF 可以減少不必要的編譯錯誤（如果你不需要特殊插件）
+          # 同时编译服务端和客户端
+          # 加上 -Dplugins=OFF 和 -Doverlay=OFF 可以跳过一些容易出错的次要组件
           cmake -Dserver=all -Dclient=all -Dtests=OFF -Doverlay=OFF -Dplugins=OFF ..
           make -j$(nproc)
 
