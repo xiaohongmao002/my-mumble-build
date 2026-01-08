@@ -1,23 +1,21 @@
 name: Build Mumble v1.5.735
 
 on:
-  workflow_dispatch: # 手动触发
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      # 第一步：精准抓取 v1.5.735 源码
       - name: Checkout Mumble Source
         uses: actions/checkout@v4
         with:
           repository: mumble-voip/mumble
-          ref: v1.5.735  # 这里指定你要求的版本标签
+          ref: v1.5.735
           submodules: recursive
           fetch-depth: 1
 
-      # 第二步：安装 Ubuntu 22.04 下的所有编译依赖
       - name: Install Dependencies
         run: |
           sudo apt-get update
@@ -25,17 +23,16 @@ jobs:
           libqt5svg5-dev libqt5x11extras5-dev qtmultimedia5-dev libboost-dev libssl-dev \
           libprotobuf-dev protobuf-compiler libcap-dev libsndfile1-dev libspeex-dev \
           libspeexdsp-dev libopus-dev libavahi-compat-libdnssd-dev libzeroc-ice-dev \
-          libasound2-dev libpulse-dev libjack-jackd2-dev libxi-dev libxext-dev sqlite3
+          libasound2-dev libpulse-dev libjack-jackd2-dev libxi-dev libxext-dev sqlite3 \
+          libpoco-dev # <--- 核心修復：添加 Poco 庫依賴
 
-      # 第三步：创建构建目录并编译
       - name: Configure and Build
         run: |
           mkdir build && cd build
-          # 同时编译服务端 (server) 和客户端 (client)
-          cmake -Dserver=all -Dclient=all -Dtests=OFF -Doverlay=OFF ..
+          # 添加 -Dplugins=OFF 可以減少不必要的編譯錯誤（如果你不需要特殊插件）
+          cmake -Dserver=all -Dclient=all -Dtests=OFF -Doverlay=OFF -Dplugins=OFF ..
           make -j$(nproc)
 
-      # 第四步：上传编译产物
       - name: Upload Binaries
         uses: actions/upload-artifact@v4
         with:
