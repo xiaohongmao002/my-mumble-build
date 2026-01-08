@@ -1,26 +1,23 @@
-name: Build Mumble Latest
+name: Build Mumble v1.5.735
 
 on:
-  workflow_dispatch: # 手動觸發按鈕
+  workflow_dispatch: # 手动触发
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    # 賦予讀取權限
-    permissions:
-      contents: read
 
     steps:
-      # 第一步：正確抓取 Mumble 官方原始碼
+      # 第一步：精准抓取 v1.5.735 源码
       - name: Checkout Mumble Source
         uses: actions/checkout@v4
         with:
-          repository: mumble-server/mumble
-          ref: master  # 抓取最新的開發分支
+          repository: mumble-voip/mumble
+          ref: v1.5.735  # 这里指定你要求的版本标签
           submodules: recursive
           fetch-depth: 1
 
-      # 第二步：安裝編譯環境
+      # 第二步：安装 Ubuntu 22.04 下的所有编译依赖
       - name: Install Dependencies
         run: |
           sudo apt-get update
@@ -30,19 +27,19 @@ jobs:
           libspeexdsp-dev libopus-dev libavahi-compat-libdnssd-dev libzeroc-ice-dev \
           libasound2-dev libpulse-dev libjack-jackd2-dev libxi-dev libxext-dev sqlite3
 
-      # 第三步：編譯
+      # 第三步：创建构建目录并编译
       - name: Configure and Build
         run: |
           mkdir build && cd build
-          # 同時編譯服務端與客戶端
+          # 同时编译服务端 (server) 和客户端 (client)
           cmake -Dserver=all -Dclient=all -Dtests=OFF -Doverlay=OFF ..
           make -j$(nproc)
 
-      # 第四步：打包產物
+      # 第四步：上传编译产物
       - name: Upload Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: mumble-latest-binaries
+          name: mumble-1.5.735-ubuntu22
           path: |
             build/mumble-server
             build/mumble
